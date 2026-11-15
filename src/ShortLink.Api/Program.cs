@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Prometheus;
 using ShortLink.Api.Data;
@@ -27,6 +28,27 @@ if (builder.Configuration.GetValue<bool>("RUN_MIGRATIONS"))
 }
 
 app.UseHttpMetrics();
+
+app.MapGet("/links", async Task<Ok<LinkResponse[]>> (
+    ShortLinkDbContext db,
+    IConfiguration configuration,
+    CancellationToken cancellationToken) =>
+{
+    var baseUrl = (configuration["BASE_URL"] ?? "http://localhost:8080").TrimEnd('/');
+    var links = await db.Links
+        .AsNoTracking()
+        .OrderByDescending(link => link.CreatedAt)
+        .ThenByDescending(link => link.Id)
+        .Select(link => new { link.Code, link.LongUrl, link.CreatedAt })
+        .ToArrayAsync(cancellationToken);
+
+    return TypedResults.Ok(links
+        .Select(link => new LinkResponse(link.Code, $"{baseUrl}/{link.Code}", link.LongUrl, link.CreatedAt))
+        .ToArray());
+})
+    .WithName("ListLinks")
+    .WithSummary("List all registered links")
+    .WithDescription("Returns all registered links, newest first.");
 
 app.MapPost("/links", async (CreateLinkRequest request, ShortLinkDbContext db, IConfiguration configuration) =>
 {

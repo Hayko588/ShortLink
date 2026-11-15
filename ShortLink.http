@@ -1,0 +1,5 @@
+@baseUrl = http://localhost:8080
+
+### List all registered links
+GET {{baseUrl}}/links
+Accept: application/json

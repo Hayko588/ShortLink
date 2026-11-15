@@ -7,6 +7,7 @@ ShortLink is a small URL-shortening API backed by PostgreSQL. It creates cryptog
 | Method | Path | Behavior |
 | --- | --- | --- |
 | `POST` | `/links` | Create a short link; accepts an absolute HTTP or HTTPS URL up to 2048 characters. Returns `201 Created` with the link data, or `400` problem details for invalid input. |
+| `GET` | `/links` | List all registered links, newest first, with their short code, short URL, destination URL, and creation time. |
 | `GET` | `/{code}` | Redirect to the saved URL with `302 Found`, or return `404 Not Found`. Codes are seven Base62 characters. |
 | `GET` | `/health/live` | Returns `200 OK` while the process is running. |
 | `GET` | `/health/ready` | Returns `200 OK` when PostgreSQL is reachable, otherwise `503 Service Unavailable`. |
@@ -19,6 +20,7 @@ curl -i -X POST http://localhost:8080/links \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com/some/long/path"}'
 
+curl -i http://localhost:8080/links
 curl -i http://localhost:8080/Ab12Cd3
 curl -i http://localhost:8080/health/live
 curl -i http://localhost:8080/health/ready

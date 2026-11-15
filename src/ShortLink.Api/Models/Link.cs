@@ -14,3 +14,6 @@ public sealed class Link
 public sealed record CreateLinkRequest(string? Url);
 
 public sealed record CreateLinkResponse(string Code, string ShortUrl, string LongUrl, DateTimeOffset CreatedAt);
+
+/// <summary>Represents a registered short link.</summary>
+public sealed record LinkResponse(string Code, string ShortUrl, string LongUrl, DateTimeOffset CreatedAt);

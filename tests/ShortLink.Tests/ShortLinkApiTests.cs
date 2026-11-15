@@ -15,6 +15,46 @@ namespace ShortLink.Tests;
 public sealed class ShortLinkApiTests
 {
     [Fact]
+    public async Task ListLinks_ReturnsAllRegisteredLinks()
+    {
+        await using var factory = new TestApiFactory(useInMemoryDatabase: true);
+        using var client = factory.CreateClient();
+        await factory.InitializeDatabaseAsync();
+
+        var emptyResponse = await client.GetAsync("/links");
+
+        Assert.Equal(HttpStatusCode.OK, emptyResponse.StatusCode);
+        var emptyLinks = await emptyResponse.Content.ReadFromJsonAsync<LinkResponse[]>();
+        Assert.NotNull(emptyLinks);
+        Assert.Empty(emptyLinks);
+
+        var firstResponse = await client.PostAsJsonAsync("/links", new CreateLinkRequest("https://example.com/first"));
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        var first = await firstResponse.Content.ReadFromJsonAsync<CreateLinkResponse>();
+        var secondResponse = await client.PostAsJsonAsync("/links", new CreateLinkRequest("https://example.com/second"));
+        Assert.Equal(HttpStatusCode.Created, secondResponse.StatusCode);
+        var second = await secondResponse.Content.ReadFromJsonAsync<CreateLinkResponse>();
+
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+
+        var listResponse = await client.GetAsync("/links");
+
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        var links = await listResponse.Content.ReadFromJsonAsync<LinkResponse[]>();
+        Assert.NotNull(links);
+        Assert.Equal(2, links.Length);
+        Assert.Contains(links, link =>
+            link.Code == first.Code &&
+            link.ShortUrl == first.ShortUrl &&
+            link.LongUrl == first.LongUrl);
+        Assert.Contains(links, link =>
+            link.Code == second.Code &&
+            link.ShortUrl == second.ShortUrl &&
+            link.LongUrl == second.LongUrl);
+    }
+
+    [Fact]
     public async Task CreateThenRedirect_ReturnsSavedDestination()
     {
         await using var factory = new TestApiFactory(useInMemoryDatabase: true);
