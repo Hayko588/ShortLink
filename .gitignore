@@ -6,3 +6,7 @@
 *.suo
 TestResults/
 .env*
+!.env.example
+.terraform/
+*.tfstate*
+*.tfvars
